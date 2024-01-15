@@ -1,0 +1,72 @@
+<div class="svg-workspace">
+  <nav class="svg-workspace-navbar"></nav>
+  <div class="workspace-container">
+    <div class="layers-container"></div>
+    <div class="drawing-container">
+      <div class="drawing-div">
+        <svg class="canvas"
+          [attr.width]="canvasWidth"
+          [attr.height]="canvasHeight"
+          [attr.viewBox]="viewBoxX + ' '
+            + viewBoxY + ' '
+            + viewBoxWidth + ' '
+            + viewBoxHeight"
+          (wheel)="setZoom($event)"
+          (mousedown)="mouseDown($event)"
+          (mousemove)="mouseMove($event)"
+          (mouseup)="mouseUp($event)">
+
+          <defs id="rendering_store">
+            <g>
+              <circle *ngFor="let c of filterByShapeType('circle')"
+                [id]="c.id" [style]="c.style"
+                [class.selected-shape]="c.selected"
+                [attr.cx]="getPoint(c.start)[0] || 0"
+                [attr.cy]="getPoint(c.start)[1] || 0"
+                [attr.r]="c.radiusX">
+              </circle>
+
+              <rect *ngFor="let r of filterByShapeType('rect')"
+                [id]="r.id" [style]="r.style"
+                [attr.x]="getPoint(r.start)[0] || 0"
+                [attr.y]="getPoint(r.start)[1] || 0"
+                [attr.width]="r.radiusX"
+                [attr.height]="r.radiusY">
+              </rect>
+
+              <path *ngFor="let s of filterByShapeType('path')"
+                [id]="s.id"
+                [style]="s.style"
+                [attr.d]="getPath(s.id)">
+              </path>
+            </g>
+          </defs>
+
+          <rect x="0" y="0" [attr.width]="canvasWidth" [attr.height]="canvasHeight"
+            stroke="#ff00ff" fill="none">
+          </rect>
+          <use *ngFor="let s of shapes"
+            (click)="selectShape(s.id)"
+            [attr.href]="'#' + s.id" >
+          </use>
+        </svg>
+
+        <app-point *ngFor="let point of filterByPointType('raw', true)"
+          (emitPointId)="handlePointClick($event)"
+          [id]="point.id"
+          [point]="point"
+          [x]="getScaledPoint(point.coord)[0]"
+          [y]="getScaledPoint(point.coord)[1]">
+        </app-point>
+      </div>
+    </div>
+    <div class="edition-tools-container">
+      <div class="mousemodes-container">
+        <button (click)="setMouseMode('circle')">Circle</button>
+        <button (click)="setMouseMode('rect')">Rect</button>
+        <button (click)="setMouseMode('path')">Line</button>
+        <button (click)="setMouseMode('default')">Default</button>
+      </div>
+    </div>
+  </div>
+</div>

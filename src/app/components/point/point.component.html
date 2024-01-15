@@ -1,0 +1,6 @@
+<div class="shape-point" (click)="handleClick($event)"
+  *ngIf="point.show || point.selected"
+  [style.top]="y + 'px'" [style.left]="x + 'px'"
+  [class.control-point]="point.type == 'control'"
+  [class.selected-point]="point.selected">
+</div>

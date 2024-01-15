@@ -1,0 +1,26 @@
+.shape-point {
+  position: absolute;
+
+  width: 10px;
+  height: 10px;
+
+  border: 1px solid rgb(4, 146, 197);
+  background-color: white;
+  border-radius: 50%;
+
+  translate: -50% -50%;
+  cursor: pointer;
+
+  &.selected-point {
+    background-color: rgb(4, 146, 197);
+  }
+
+  &.control-point {
+    border-radius: 0;
+  }
+
+  &:hover {
+    background-color: rgb(109, 196, 227);
+    border-color: rgb(0, 94, 128);
+  }
+}
