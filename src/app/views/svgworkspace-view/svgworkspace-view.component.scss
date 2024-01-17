@@ -38,14 +38,9 @@
         .canvas {
           background-color: white;
 
-          g * {
-            fill: rgb(215, 215, 215);
-            stroke: black;
-            stroke-width: 1px;
-          }
-
           g .selected-shape {
             stroke: rgb(7, 86, 125) !important;
+            stroke-dasharray: 10, 5, 5, 5;
             position: relative;
           }
         }
@@ -57,9 +52,28 @@
       padding: 1rem;
 
       .mousemodes-container {
+        width: min-content;
+        margin-left: auto;
+        margin-right: auto;
+
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.75rem;
+
+        .mousemode-btn {
+          width: 60px;
+          height: 30px;
+
+          border: none;
+          border-radius: 10px;
+
+          font-size: 1rem;
+        }
+
+        .mousemode-btn.selected {
+          background-color: rgb(163, 163, 163);
+          border: 1px solid rgb(60, 60, 60);
+        }
       }
     }
   }

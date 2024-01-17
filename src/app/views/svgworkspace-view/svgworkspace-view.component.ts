@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import Segment from 'src/app/helpers/classes/Segment.class';
 import SegmentPoint from 'src/app/helpers/classes/SegmentPoint.class';
 import Shape from 'src/app/helpers/classes/Shape.class';
@@ -9,13 +10,21 @@ import SegmentType from 'src/app/helpers/types/SegmentType.type';
 import ShapeType from 'src/app/helpers/types/ShapeType.type';
 import { ShapesManagerService } from 'src/app/services/shapes-manager.service';
 import { ShapesTranslatorService } from 'src/app/services/shapes-translator.service';
+import { faArrowPointer, faPenNib } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
   selector: 'app-svgworkspace-view',
   templateUrl: './svgworkspace-view.component.html',
-  styleUrls: ['./svgworkspace-view.component.scss']
+  styleUrls: ['./svgworkspace-view.component.scss'],
 })
 export class SVGWorkspaceViewComponent implements OnInit {
+  faCircle = faCircle;
+  faRect = faSquare;
+  faPath = faPenNib;
+  faDefault = faArrowPointer;
+  activeBtn: MouseMode = this.ShapesManager.mouseMode;
+
   shapes: Shape[] = [];
   points: SegmentPoint[] = [];
 
@@ -48,7 +57,6 @@ export class SVGWorkspaceViewComponent implements OnInit {
 
     this.ShapesManager.$points.subscribe((v) => {
       this.points = v;
-      console.log(v.map((p) => p.id + ' ' + p.coord));
     });
   }
 
@@ -88,9 +96,6 @@ export class SVGWorkspaceViewComponent implements OnInit {
     const segments = shape.segments;
     if (!segments.length) return;
 
-    console.log(segments[0]);
-    console.log(this.points);
-    console.log(pointId);
     if (segments[0].start != pointId) return;
     this.creatingShape = false;
     this.mouseIsDown = false;
@@ -304,6 +309,7 @@ export class SVGWorkspaceViewComponent implements OnInit {
 
   setMouseMode(mode: MouseMode, segment?: SegmentType): void {
     this.ShapesManager.setMouseMode(mode, segment);
+    this.activeBtn = mode;
   }
 
   getPath(shapeId: string): string {

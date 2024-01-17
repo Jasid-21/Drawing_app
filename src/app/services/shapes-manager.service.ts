@@ -125,11 +125,25 @@ export class ShapesManagerService {
   }
 
   toggleShapeSelection(shapeId: string): void {
+    const multiselect = false;
     const shapes = this.$shapes.getValue();
     const shape = shapes.find((s) => s.id == shapeId);
     if (!shape) return;
 
     const nextMode = !shape.selected;
+    if (!multiselect) {
+      shapes.forEach((s) => {
+        s.selected = false;
+        this.toggleShapePoints(s, false);
+      });
+    }
+    shape.selected = nextMode;
+
+    this.toggleShapePoints(shape, nextMode);
+    this.$shapes.next(shapes);
+  }
+
+  toggleShapePoints(shape: Shape, nextMode: boolean): void {
     const starts = shape.segments.map((s) => s.start);
     const ends = shape.segments.map((s) => s.end);
     const controls: string[] = []
@@ -143,7 +157,6 @@ export class ShapesManagerService {
       ...controls,
     ]
 
-    shape.selected = nextMode;
     const points = this.$points.getValue();
     segmentsStartPointsIds.forEach((id) => {
       const point = points.find((p) => p.id == id);

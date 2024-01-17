@@ -1,0 +1,37 @@
+<div class="styles-editor" >
+  <div class="colors-displayer">
+    <div class="prev-color"
+      [style.background-color]="prevColor"
+      (click)="setCoordFromColor(prevColor)">
+    </div>
+    <div class="current-color"
+      [style.background-color]="currentColor"
+      (click)="setCoordFromColor(currentColor)">
+    </div>
+  </div>
+  <div class="color-picker">
+    <div class="wb-picker-container">
+      <canvas #wbPicker width="160" height="120" class="wb-picker"></canvas>
+      <canvas #wbPointer width="160" height="120"
+        (click)="setWbPicker($event)"></canvas>
+    </div>
+    <div class="hue-picker-container">
+      <canvas #huePicker class="hue-picker"
+        width="160" height="26">
+      </canvas>
+      <canvas #huePointer
+        width="160" height="26"
+        (click)="setHuePicker($event)">
+      </canvas>
+    </div>
+    <div class="opacity-picker-container">
+      <canvas #opacityPicker class="opacity-picker"
+        width="160" height="26">
+      </canvas>
+      <canvas #opacityPointer
+        width="160" height="26"
+        (click)="setOpacityPicker($event)">
+      </canvas>
+    </div>
+  </div>
+</div>

@@ -13,7 +13,8 @@ class Shape {
   round: number = 0;
   radiusX: number = 0;
   radiusY: number = 0;
-  style: CssStyle = { fill: 'red' };
+  fill: string = 'rgba(255,0,0,1)';
+  stroke: string = 'rgb(0,0,0)';
   done: boolean = false;
 
   constructor(
@@ -38,6 +39,10 @@ class Shape {
   toggleSelect(): void {
     console.log("Toggling");
     this.selected = !this.selected;
+  }
+
+  setFill(color: string): void {
+    this.fill = color;
   }
 }
 

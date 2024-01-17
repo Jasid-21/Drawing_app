@@ -1,0 +1,72 @@
+.styles-editor {
+  border-top: 1px solid rgb(148, 148, 148);
+  padding-top: 1rem;
+
+  &.hide {
+    display: none;
+  }
+
+  .colors-displayer {
+    width: 80%;
+    height: 35px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 0.75rem;
+
+    display: flex;
+
+    .prev-color,
+    .current-color {
+      width: 50%;
+      height: 100%;
+      border: 1px solid rgb(169, 169, 169);
+    }
+
+    .prev-color {
+      border-radius: 10px 0 0 10px;
+      border-right: none;
+    }
+
+    .current-color {
+      border-radius: 0 10px 10px 0;
+      border-left: none;
+    }
+  }
+
+  .color-picker {
+    display: grid;
+    grid-template-rows: 120px 26px 26px;
+    row-gap: 1rem;
+
+    .wb-picker-container,
+    .hue-picker-container,
+    .opacity-picker-container {
+      height: min-content;
+      position: relative;
+
+      canvas {
+        border: 1px solid black;
+        position: absolute;
+        left: 50%;
+        top: 0;
+        translate: -50% 0;
+      }
+    }
+
+    .wb-picker-container {
+      .wb-picker {
+      }
+    }
+
+    .hue-picker-container {
+      .hue-picker {
+      }
+    }
+
+    .opacity-picker-container {
+      .opacity-picker {
+        background: url('../../../assets/images/transparent.jpg');
+      }
+    }
+  }
+}

@@ -19,7 +19,9 @@
           <defs id="rendering_store">
             <g>
               <circle *ngFor="let c of filterByShapeType('circle')"
-                [id]="c.id" [style]="c.style"
+                [id]="c.id"
+                [attr.fill]="c.fill"
+                [attr.stroke]="c.stroke"
                 [class.selected-shape]="c.selected"
                 [attr.cx]="getPoint(c.start)[0] || 0"
                 [attr.cy]="getPoint(c.start)[1] || 0"
@@ -27,7 +29,10 @@
               </circle>
 
               <rect *ngFor="let r of filterByShapeType('rect')"
-                [id]="r.id" [style]="r.style"
+                [id]="r.id"
+                [attr.fill]="r.fill"
+                [attr.stroke]="r.stroke"
+                [class.selected-shape]="r.selected"
                 [attr.x]="getPoint(r.start)[0] || 0"
                 [attr.y]="getPoint(r.start)[1] || 0"
                 [attr.width]="r.radiusX"
@@ -36,7 +41,9 @@
 
               <path *ngFor="let s of filterByShapeType('path')"
                 [id]="s.id"
-                [style]="s.style"
+                [attr.fill]="s.fill"
+                [attr.stroke]="s.stroke"
+                [class.selected-shape]="s.selected"
                 [attr.d]="getPath(s.id)">
               </path>
             </g>
@@ -62,11 +69,29 @@
     </div>
     <div class="edition-tools-container">
       <div class="mousemodes-container">
-        <button (click)="setMouseMode('circle')">Circle</button>
-        <button (click)="setMouseMode('rect')">Rect</button>
-        <button (click)="setMouseMode('path')">Line</button>
-        <button (click)="setMouseMode('default')">Default</button>
+        <button (click)="setMouseMode('circle')"
+          class="mousemode-btn"
+          [class.selected]="activeBtn == 'circle'">
+          <fa-icon [icon]="faCircle"></fa-icon>
+        </button>
+        <button (click)="setMouseMode('rect')"
+          class="mousemode-btn"
+          [class.selected]="activeBtn == 'rect'">
+          <fa-icon [icon]="faRect"></fa-icon>
+        </button>
+        <button (click)="setMouseMode('path')"
+          class="mousemode-btn"
+          [class.selected]="activeBtn == 'path'">
+          <fa-icon [icon]="faPath"></fa-icon>
+        </button>
+        <button (click)="setMouseMode('default')"
+          class="mousemode-btn"
+          [class.selected]="activeBtn == 'default'">
+          <fa-icon [icon]="faDefault"></fa-icon>
+        </button>
       </div>
+      <br>
+      <app-styles-editor></app-styles-editor>
     </div>
   </div>
 </div>
