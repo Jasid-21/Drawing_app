@@ -1,5 +1,4 @@
-import { Component, OnInit, NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, OnInit, NgModule, ViewChild, ElementRef } from '@angular/core';
 import Segment from 'src/app/helpers/classes/Segment.class';
 import SegmentPoint from 'src/app/helpers/classes/SegmentPoint.class';
 import Shape from 'src/app/helpers/classes/Shape.class';
@@ -12,6 +11,7 @@ import { ShapesManagerService } from 'src/app/services/shapes-manager.service';
 import { ShapesTranslatorService } from 'src/app/services/shapes-translator.service';
 import { faArrowPointer, faPenNib } from '@fortawesome/free-solid-svg-icons';
 import { faCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
+import DragPointObj from 'src/app/helpers/types/DragPointObj.type';
 
 @Component({
   selector: 'app-svgworkspace-view',
@@ -19,6 +19,9 @@ import { faCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
   styleUrls: ['./svgworkspace-view.component.scss'],
 })
 export class SVGWorkspaceViewComponent implements OnInit {
+  @ViewChild('canvas', { static: true }) canvas!: ElementRef;
+  canvasBound: DOMRect | null = null;
+
   faCircle = faCircle;
   faRect = faSquare;
   faPath = faPenNib;
@@ -27,6 +30,8 @@ export class SVGWorkspaceViewComponent implements OnInit {
 
   shapes: Shape[] = [];
   points: SegmentPoint[] = [];
+  draggedElement:string = '';
+  dragStartPoint: Duple<number> | null = null;
 
   canvasWidth: number = 700;
   canvasHeight: number = 550;
@@ -58,6 +63,15 @@ export class SVGWorkspaceViewComponent implements OnInit {
     this.ShapesManager.$points.subscribe((v) => {
       this.points = v;
     });
+
+    const canvas = this.canvas.nativeElement as HTMLCanvasElement;
+    this.canvasBound = canvas.getBoundingClientRect();
+
+    const point = new SegmentPoint('union', [150, 150]);
+    const shape = new Shape('rect', [], false, point.id, 0, 100, 100);
+
+    this.ShapesManager.addPoint(point);
+    this.ShapesManager.addShape(shape);
   }
 
   setZoom(ev: WheelEvent): void {
@@ -114,16 +128,63 @@ export class SVGWorkspaceViewComponent implements OnInit {
     });
   }
 
-  mouseDown(ev: MouseEvent): void {
-    const mouseMode = this.ShapesManager.mouseMode;
-    if (mouseMode == 'default') return;
+  handlePointDrag(dragObj: DragPointObj): void {
+    const { id, start, end } = dragObj;
+    if (!this.canvasBound) return;
+    const canvasCoord = [this.canvasBound.left, this.canvasBound.top];
+    const scaledStart = this.scaledMouse(
+      start[0] - canvasCoord[0],
+      start[1] - canvasCoord[1],
+    );
+    const scaledEnd = this.scaledMouse(
+      end[0] - canvasCoord[0],
+      end[1] - canvasCoord[1],
+    );
 
-    const mousePoint: Duple<number> = this.scaledMouse(ev.offsetX, ev.offsetY);
+    const [deltaX, deltaY] = [
+      scaledEnd[0] - scaledStart[0],
+      scaledEnd[1] - scaledStart[1],
+    ]
+
+    this.ShapesManager.movePoint(id, deltaX, deltaY);
+  }
+
+  handledragOver(ev: DragEvent): void {
+    ev.preventDefault();
+  }
+
+  mouseDown(ev: MouseEvent): void {
+    this.ShapesManager.deselectAll();
+    const mouseMode = this.ShapesManager.mouseMode;
+    if (mouseMode == 'default') {
+      const t = ev.target as HTMLElement;
+      if (!t.classList.contains('draggable')) return;
+
+      const shapeId = t.getAttribute('href')?.slice(1);
+      const shape = this.shapes.find((s) => s.id == shapeId);
+      if (!shape) return;
+      if (!this.canvasBound) return;
+
+      this.draggedElement = shape.id;
+      const absCoord = [ev.clientX, ev.clientY];
+      const canvasCoord = [this.canvasBound.left, this.canvasBound.top];
+      const [mouseX, mouseY] = [
+        absCoord[0] - canvasCoord[0],
+        absCoord[1] - canvasCoord[1],
+      ];
+
+      const scaledMouse = this.scaledMouse(mouseX, mouseY);
+      this.dragStartPoint = [...scaledMouse];
+
+      return;
+    };
+
+    const mousePoint = this.scaledMouse(ev.offsetX, ev.offsetY);
     this.startCoord = [...mousePoint];
 
-    const pointType: PointType = mouseMode == 'path' ? 'union' : 'raw';
+    //const pointType: PointType = mouseMode == 'path' ? 'union' : 'raw';
     const tryPoint = this.points.find((p) => p.id == this.endPointId)
-    const startPoint = tryPoint || new SegmentPoint(pointType, mousePoint);
+    const startPoint = tryPoint || new SegmentPoint('raw', mousePoint);
     startPoint.show = true;
     if (!tryPoint) {
       this.ShapesManager.addPoint(startPoint);
@@ -136,6 +197,8 @@ export class SVGWorkspaceViewComponent implements OnInit {
     const shape = tryShape || new Shape(mouseMode, [], false, startPoint.id);
     shape.segments.push(segment);
     if (!tryShape) {
+      const shapesColor = this.ShapesManager.shapesColor;
+      shape.setFill(shapesColor);
       this.ShapesManager.addShape(shape);
     }
 
@@ -149,6 +212,29 @@ export class SVGWorkspaceViewComponent implements OnInit {
 
   mouseMove(ev: MouseEvent): void {
     const mouseMode = this.ShapesManager.mouseMode;
+
+    if (mouseMode == 'default') {
+      if (!this.draggedElement) return;
+      if (!this.canvasBound) return;
+
+      const absCoord = [ev.clientX, ev.clientY];
+      const canvasCoord = [this.canvasBound.left, this.canvasBound.top];
+      const [mouseX, mouseY] = [
+        absCoord[0] - canvasCoord[0],
+        absCoord[1] - canvasCoord[1],
+      ];
+
+      const scaledMouse = this.scaledMouse(mouseX, mouseY);
+
+      if (!this.dragStartPoint) return;
+      this.ShapesManager.moveShape(
+        this.draggedElement,
+        scaledMouse[0] - this.dragStartPoint[0],
+        scaledMouse[1] - this.dragStartPoint[1]
+      );
+
+      this.dragStartPoint = [...scaledMouse];
+    }
 
     if (!this.creatingShape) return;
 
@@ -220,7 +306,11 @@ export class SVGWorkspaceViewComponent implements OnInit {
   mouseUp(ev: MouseEvent): void {
     this.mouseIsDown = false;
     const mouseMode = this.ShapesManager.mouseMode;
-    if (mouseMode == 'default') return;
+    if (mouseMode == 'default') {
+      this.draggedElement = '';
+      this.dragStartPoint = null;
+      return;
+    }
 
     const mp: Duple<number> = this.scaledMouse(ev.offsetX, ev.offsetY); // Mouse point.
     const diff = mp[0] != this.startCoord[0] || mp[1] != this.startCoord[1];
@@ -232,6 +322,14 @@ export class SVGWorkspaceViewComponent implements OnInit {
         this.creatingShape = false;
       }
 
+      const shape = this.shapes.find(s => s.id == this.rawShapeId);
+      if (!shape) return;
+
+      const startPoint = this.points.find((p) => p.id == shape.segments[0].start);
+      if (!startPoint) return;
+
+      startPoint.type = 'union';
+
       return;
     }
 
@@ -240,13 +338,16 @@ export class SVGWorkspaceViewComponent implements OnInit {
         const shape = this.shapes.find((s) => s.id == this.rawShapeId);
         if (!shape) return;
 
+        const startPoint = this.points.find((p) => p.id == shape.segments[0].start);
+        if (!startPoint) return;
+        startPoint.type = 'union';
+
         const segment = shape.segments[shape.segments.length - 1];
         segment.type = 'curve';
 
         const endPoint = this.points.find((p) => p.id == this.endPointId);
         if (!endPoint) return;
 
-        console.log(218);
         endPoint.type = 'control';
         segment.addControlPoint(endPoint.id);
 
@@ -276,6 +377,54 @@ export class SVGWorkspaceViewComponent implements OnInit {
     if (!point) return [null, null];
 
     return point.coord;
+  }
+
+  getCenter(shapeId: string): string | undefined {
+    const shape = this.shapes.find((s) => s.id == shapeId);
+    if (!shape) return;
+
+    var center: Duple<number> | undefined = undefined;
+    if (shape.type == 'path') {
+      var minX: number = Infinity,
+      maxX: number = -Infinity,
+      minY: number = Infinity,
+      maxY: number = -Infinity;
+      shape.segments.forEach((s) => {
+        const startPoint = this.points.find((p) => p.id == s.start);
+        if (!startPoint) return;
+
+        if (startPoint.coord[0] < minX) minX = startPoint.coord[0];
+        if (startPoint.coord[0] > maxX) maxX = startPoint.coord[0];
+        if (startPoint.coord[1] < minY) minY = startPoint.coord[1];
+        if (startPoint.coord[1] > maxY) maxY = startPoint.coord[1];
+      });
+
+      center = [
+        (minX + maxX) / 2,
+        (minY + maxY) / 2
+      ]
+    }
+
+    if (shape.type == 'circle') {
+      const point = this.points.find((p) => p.id == shape.start);
+      if (!point) return;
+
+      center = point.coord;
+    }
+
+    if (shape.type == 'rect') {
+      const start = this.points.find((p) => p.id == shape.start);
+      if (!start) return;
+
+      center = [
+        start.coord[0] + shape.radiusX / 2,
+        start.coord[1] + shape.radiusY / 2
+      ];
+
+      console.log(center);
+    }
+
+    return center?.map((n) => n + 'px').join(' ');
   }
 
   scaledMouse(mouseX: number, mouseY: number): Duple<number> {

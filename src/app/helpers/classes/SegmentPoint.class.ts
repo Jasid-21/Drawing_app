@@ -1,4 +1,5 @@
 import GetRandomString from "../functions/GetRandomString.func";
+import Duple from "../types/Duple.type";
 import PointType from "../types/PointType.type";
 
 class SegmentPoint {
@@ -8,13 +9,13 @@ class SegmentPoint {
   selected: boolean = false;
   show: boolean = false;
 
-  constructor(type: PointType, coord: [number, number]) {
+  constructor(type: PointType, coord: Duple<number>) {
     this.type = type;
     this.coord = coord;
     this.id = GetRandomString();
   }
 
-  updateCoord(coord: [number, number]): void {
+  updateCoord(coord: Duple<number>): void {
     this.coord = coord;
   }
 }

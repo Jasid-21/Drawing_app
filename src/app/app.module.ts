@@ -8,6 +8,7 @@ import { SVGWorkspaceViewComponent } from './views/svgworkspace-view/svgworkspac
 import { PointComponent } from './components/point/point.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { StylesEditorComponent } from './components/styles-editor/styles-editor.component';
+import { FormEditorComponent } from './components/form-editor/form-editor.component';
 
 @NgModule({
   declarations: [
@@ -15,7 +16,8 @@ import { StylesEditorComponent } from './components/styles-editor/styles-editor.
     HomeViewComponent,
     SVGWorkspaceViewComponent,
     PointComponent,
-    StylesEditorComponent
+    StylesEditorComponent,
+    FormEditorComponent
   ],
   imports: [
     BrowserModule,

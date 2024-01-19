@@ -1,9 +1,69 @@
 .styles-editor {
   border-top: 1px solid rgb(148, 148, 148);
-  padding-top: 1rem;
+  padding-top: 0.5rem;
 
   &.hide {
     display: none;
+  }
+
+  .mode-selector {
+    position: relative;
+    width: min-content;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1rem;
+    padding-bottom: 5px;
+
+    display: flex;
+    justify-content: space-between;
+    column-gap: 2rem;
+
+    .mode {
+      color: white;
+      font-style: italic;
+      cursor: pointer;
+
+      &:hover {
+        font-weight: 700;
+      }
+    }
+
+    &::after {
+      transition: all 180ms ease;
+    }
+
+    &.fill {
+      &::after {
+        content: '';
+        position: absolute;
+        left: -3%;
+        bottom: 0;
+        width: 50%;
+        border: 1px solid white;
+        border-radius: 10px;
+      }
+    }
+
+    &.stroke {
+      &::after {
+        content: '';
+        position: absolute;
+        left: 53%;
+        bottom: 0;
+        width: 50%;
+        border: 1px solid white;
+        border-radius: 10px;
+      }
+    }
+  }
+
+  .title {
+    margin: 0;
+    margin-bottom: 0.3rem;
+    text-align: center;
+    font-weight: 700;
+    color: white;
+    font-style: italic;
   }
 
   .colors-displayer {

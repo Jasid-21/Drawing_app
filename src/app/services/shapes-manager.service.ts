@@ -2,8 +2,6 @@ import { Injectable, OnInit } from '@angular/core';
 import SegmentPoint from '../helpers/classes/SegmentPoint.class';
 import Shape from '../helpers/classes/Shape.class';
 import { BehaviorSubject } from 'rxjs';
-import ShapeType from '../helpers/types/ShapeType.type';
-import Segment from '../helpers/classes/Segment.class';
 import Duple from '../helpers/types/Duple.type';
 import MouseMode from '../helpers/types/MouseMode.type';
 import SegmentType from '../helpers/types/SegmentType.type';
@@ -19,8 +17,51 @@ export class ShapesManagerService {
   segmentType: SegmentType = 'line';
   mouseIsDown: boolean = false;
 
+  shapesColor: string = 'rgb(170,170,170)'
 
   constructor() { }
+
+  setShapesColor(color: string): void {
+    this.shapesColor = color;
+  }
+
+  moveShape(shapeId: string, deltaX: number, deltaY: number): void {
+    const shapes = this.$shapes.getValue();
+    const points = this.$points.getValue();
+
+    const shape = shapes.find((s) => s.id == shapeId);
+    if (!shape) return;
+
+    if (shape.type != 'path') {
+      const startPoint = points.find((p) => p.id == shape.start);
+      if (!startPoint) return;
+
+      const [x, y] = startPoint.coord;
+      startPoint.coord = [x + deltaX, y + deltaY];
+      this.$points.next(points);
+
+      return;
+    }
+
+    shape.segments.forEach((s) => {
+      const s_points: SegmentPoint[] = [];
+      const startPoint = points.find((p) => p.id == s.start);
+      if (!startPoint) return;
+
+      s_points.push(startPoint);
+      s.controlPoints.forEach((pid) => {
+        const point = points.find((p) => p.id == pid);
+        if (point) s_points.push(point);
+      });
+
+      s_points.forEach((p) => {
+        const [x, y] = p.coord;
+        p.coord = [x + deltaX, y + deltaY];
+      });
+    });
+
+    this.$points.next(points);
+  }
 
   setMouseMode(mode: MouseMode, segment?: SegmentType): void {
     this.mouseMode = mode;
@@ -45,10 +86,15 @@ export class ShapesManagerService {
     this.$points.next(newPoints);
   }
 
-  updatePoint(id: string, coord: [number, number]): void {
+  movePoint(id: string, deltaX: number, deltaY: number): void {
     const points = this.$points.getValue();
     const point = points.find((p) => p.id == id);
     if (!point) return;
+
+    const coord: Duple<number> = [
+      point.coord[0] + deltaX,
+      point.coord[1] + deltaY,
+    ];
 
     point.updateCoord(coord);
     this.$points.next(points);
@@ -124,10 +170,17 @@ export class ShapesManagerService {
     return shapes;
   }
 
-  toggleShapeSelection(shapeId: string): void {
+  deselectAll(): void {
+    const shapes = this.$shapes.getValue();
+    shapes.filter((s) => s.selected).forEach((s) => {
+      this.toggleShapeSelection(s);
+    });
+  }
+
+  toggleShapeSelection(shape: Shape | string | undefined): void {
     const multiselect = false;
     const shapes = this.$shapes.getValue();
-    const shape = shapes.find((s) => s.id == shapeId);
+    shape = shape instanceof Shape ? shape : shapes.find((s) => s.id == shape);
     if (!shape) return;
 
     const nextMode = !shape.selected;

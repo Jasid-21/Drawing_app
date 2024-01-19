@@ -1,10 +1,34 @@
 <div class="svg-workspace">
-  <nav class="svg-workspace-navbar"></nav>
+  <nav class="svg-workspace-navbar">
+    <div class="mousemodes-container">
+      <button (click)="setMouseMode('circle')"
+        class="mousemode-btn"
+        [class.selected]="activeBtn == 'circle'">
+        <fa-icon [icon]="faCircle"></fa-icon>
+      </button>
+      <button (click)="setMouseMode('rect')"
+        class="mousemode-btn"
+        [class.selected]="activeBtn == 'rect'">
+        <fa-icon [icon]="faRect"></fa-icon>
+      </button>
+      <button (click)="setMouseMode('path')"
+        class="mousemode-btn"
+        [class.selected]="activeBtn == 'path'">
+        <fa-icon [icon]="faPath"></fa-icon>
+      </button>
+      <button (click)="setMouseMode('default')"
+        class="mousemode-btn"
+        [class.selected]="activeBtn == 'default'">
+        <fa-icon [icon]="faDefault"></fa-icon>
+      </button>
+    </div>
+  </nav>
   <div class="workspace-container">
     <div class="layers-container"></div>
     <div class="drawing-container">
-      <div class="drawing-div">
-        <svg class="canvas"
+      <div class="drawing-div"
+        (dragover)="handledragOver($event)">
+        <svg class="canvas" #canvas
           [attr.width]="canvasWidth"
           [attr.height]="canvasHeight"
           [attr.viewBox]="viewBoxX + ' '
@@ -25,7 +49,8 @@
                 [class.selected-shape]="c.selected"
                 [attr.cx]="getPoint(c.start)[0] || 0"
                 [attr.cy]="getPoint(c.start)[1] || 0"
-                [attr.r]="c.radiusX">
+                [attr.r]="c.radiusX"
+                [style.transform-origin]="getCenter(c.id)">
               </circle>
 
               <rect *ngFor="let r of filterByShapeType('rect')"
@@ -36,7 +61,8 @@
                 [attr.x]="getPoint(r.start)[0] || 0"
                 [attr.y]="getPoint(r.start)[1] || 0"
                 [attr.width]="r.radiusX"
-                [attr.height]="r.radiusY">
+                [attr.height]="r.radiusY"
+                [style.transform-origin]="getCenter(r.id)">
               </rect>
 
               <path *ngFor="let s of filterByShapeType('path')"
@@ -44,7 +70,8 @@
                 [attr.fill]="s.fill"
                 [attr.stroke]="s.stroke"
                 [class.selected-shape]="s.selected"
-                [attr.d]="getPath(s.id)">
+                [attr.d]="getPath(s.id)"
+                [style.transform-origin]="getCenter(s.id)">
               </path>
             </g>
           </defs>
@@ -52,14 +79,17 @@
           <rect x="0" y="0" [attr.width]="canvasWidth" [attr.height]="canvasHeight"
             stroke="#ff00ff" fill="none">
           </rect>
+
           <use *ngFor="let s of shapes"
+            class="shape draggable"
             (click)="selectShape(s.id)"
-            [attr.href]="'#' + s.id" >
+            [attr.href]="'#' + s.id">
           </use>
         </svg>
 
         <app-point *ngFor="let point of filterByPointType('raw', true)"
           (emitPointId)="handlePointClick($event)"
+          (draggingPoint)="handlePointDrag($event)"
           [id]="point.id"
           [point]="point"
           [x]="getScaledPoint(point.coord)[0]"
@@ -68,28 +98,7 @@
       </div>
     </div>
     <div class="edition-tools-container">
-      <div class="mousemodes-container">
-        <button (click)="setMouseMode('circle')"
-          class="mousemode-btn"
-          [class.selected]="activeBtn == 'circle'">
-          <fa-icon [icon]="faCircle"></fa-icon>
-        </button>
-        <button (click)="setMouseMode('rect')"
-          class="mousemode-btn"
-          [class.selected]="activeBtn == 'rect'">
-          <fa-icon [icon]="faRect"></fa-icon>
-        </button>
-        <button (click)="setMouseMode('path')"
-          class="mousemode-btn"
-          [class.selected]="activeBtn == 'path'">
-          <fa-icon [icon]="faPath"></fa-icon>
-        </button>
-        <button (click)="setMouseMode('default')"
-          class="mousemode-btn"
-          [class.selected]="activeBtn == 'default'">
-          <fa-icon [icon]="faDefault"></fa-icon>
-        </button>
-      </div>
+      <app-form-editor></app-form-editor>
       <br>
       <app-styles-editor></app-styles-editor>
     </div>

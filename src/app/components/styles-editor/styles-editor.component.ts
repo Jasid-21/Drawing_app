@@ -18,6 +18,8 @@ export class StylesEditorComponent implements OnInit {
   @ViewChild('opacityPicker', { static: true }) opacityCanvasRef!: ElementRef;
   @ViewChild('opacityPointer', { static: true }) opacityPointerRef!: ElementRef;
 
+  editMode = 'fill';
+
   hueCanvasWidth: number = 150;
   hueCanvasHeight: number = 50;
   wbCanvasWidth: number = 150;
@@ -112,14 +114,11 @@ export class StylesEditorComponent implements OnInit {
     //* Paint opacity canvas.
     this.drawOpacityCanvas();
 
-    this.setCoordFromColor('rgb(255,255,255)');
+    this.setCoordFromColor('rgba(140,140,140,0.7)');
   }
 
-  setFillColor(ev: EventTarget | null): void {
-    if (!ev) return;
-
-    const color = (ev as HTMLInputElement).value;
-    this.selectedShapes.forEach((s) => s.setFill(color));
+  setEditMode(mode: string): void {
+    this.editMode = mode;
   }
 
   drawWbCanvas(): void {
@@ -204,6 +203,7 @@ export class StylesEditorComponent implements OnInit {
   setCurrentColor(color: string): void {
     this.prevColor = this.currentColor;
     this.currentColor = color;
+    this.ShapesManager.setShapesColor(color);
   }
 
   setHuePicker(ev: MouseEvent | number, setPrev: boolean = true): void {

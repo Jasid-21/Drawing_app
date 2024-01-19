@@ -1,4 +1,11 @@
-<div class="styles-editor" >
+<div class="styles-editor">
+  <div class="mode-selector"
+    [class.fill]="editMode == 'fill'"
+    [class.stroke]="editMode == 'stroke'">
+    <span class="mode" (click)="setEditMode('fill')">Fill</span>
+    <span class="mode" (click)="setEditMode('stroke')">Stroke</span>
+  </div>
+
   <div class="colors-displayer">
     <div class="prev-color"
       [style.background-color]="prevColor"
