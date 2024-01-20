@@ -1,7 +1,7 @@
 import GetRandomString from "../functions/GetRandomString.func";
 import ShapeType from "../types/ShapeType.type";
 import Segment from "./Segment.class";
-import CssStyle from "../types/CssStyle.type";
+import Duple from "../types/Duple.type";
 
 class Shape {
   id: string;
@@ -15,7 +15,10 @@ class Shape {
   radiusY: number = 0;
   fill: string = 'rgba(255,0,0,1)';
   stroke: string = 'rgb(0,0,0)';
-  done: boolean = false;
+
+  rotate: number = 0;
+  scale: Duple<number> = [1, 1];
+  translate: Duple<number> = [0, 0];
 
   constructor(
       type: ShapeType,
@@ -43,6 +46,16 @@ class Shape {
 
   setFill(color: string): void {
     this.fill = color;
+  }
+
+  setTransforms(
+    rotate: number = 0,
+    scale: Duple<number>  = [1, 1],
+    translate: Duple<number> = [0, 0]
+  ): void {
+    this.scale = scale;
+    this.rotate = rotate;
+    this.translate = translate;
   }
 }
 

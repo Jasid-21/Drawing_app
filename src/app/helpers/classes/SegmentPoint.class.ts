@@ -9,10 +9,17 @@ class SegmentPoint {
   selected: boolean = false;
   show: boolean = false;
 
-  constructor(type: PointType, coord: Duple<number>) {
+  constructor(type: PointType, coord: Duple<number>, move = false) {
     this.type = type;
     this.coord = coord;
     this.id = GetRandomString();
+
+    if (move) {
+      this.show = true;
+      setInterval(() => {
+        coord[0] = coord[0] + 10;
+      }, 1000);
+    }
   }
 
   updateCoord(coord: Duple<number>): void {

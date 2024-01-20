@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
+import { FormsModule } from '@angular/forms';
 import { AppComponent } from './app.component';
 import { HomeViewComponent } from './views/home-view/home-view.component';
 import { SVGWorkspaceViewComponent } from './views/svgworkspace-view/svgworkspace-view.component';
@@ -23,6 +24,7 @@ import { FormEditorComponent } from './components/form-editor/form-editor.compon
     BrowserModule,
     AppRoutingModule,
     FontAwesomeModule,
+    FormsModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

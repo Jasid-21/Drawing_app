@@ -50,7 +50,8 @@
                 [attr.cx]="getPoint(c.start)[0] || 0"
                 [attr.cy]="getPoint(c.start)[1] || 0"
                 [attr.r]="c.radiusX"
-                [style.transform-origin]="getCenter(c.id)">
+                [style.transform-origin]="getCenter(c.id)"
+                [style.translate]="c.translate[0] + 'px ' + c.translate[1] + 'px'">
               </circle>
 
               <rect *ngFor="let r of filterByShapeType('rect')"

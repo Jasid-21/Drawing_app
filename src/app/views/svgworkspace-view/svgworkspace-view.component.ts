@@ -66,12 +66,6 @@ export class SVGWorkspaceViewComponent implements OnInit {
 
     const canvas = this.canvas.nativeElement as HTMLCanvasElement;
     this.canvasBound = canvas.getBoundingClientRect();
-
-    const point = new SegmentPoint('union', [150, 150]);
-    const shape = new Shape('rect', [], false, point.id, 0, 100, 100);
-
-    this.ShapesManager.addPoint(point);
-    this.ShapesManager.addShape(shape);
   }
 
   setZoom(ev: WheelEvent): void {
@@ -420,8 +414,6 @@ export class SVGWorkspaceViewComponent implements OnInit {
         start.coord[0] + shape.radiusX / 2,
         start.coord[1] + shape.radiusY / 2
       ];
-
-      console.log(center);
     }
 
     return center?.map((n) => n + 'px').join(' ');

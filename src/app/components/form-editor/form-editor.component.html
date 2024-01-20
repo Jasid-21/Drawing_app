@@ -1,1 +1,52 @@
-<p>form-editor works!</p>
+<div class="form-editor">
+  <h4 class="title">Transformations.</h4>
+  <div class="scale-container feature-container">
+    <span class="feature-title">
+      Scale
+    </span><br>
+    <form class="feature-form" (submit)="handleTransforms($event)">
+      <div class="input-container">
+        <span>X:</span>
+        &nbsp;
+        <input name="scaleX" type="number" [(ngModel)]="scaleX">
+      </div>
+      <div class="input-container">
+        <span>Y:</span>
+        &nbsp;
+        <input name="scaleY" type="number" [(ngModel)]="scaleY">
+      </div>
+      <input type="submit" value="">
+    </form>
+  </div>
+  <div class="translation-container feature-container">
+    <span class="feature-title">
+      Translate
+    </span><br>
+    <form class="feature-form" (submit)="handleTransforms($event)">
+      <div class="input-container">
+        <span>X:</span>
+        &nbsp;
+        <input name="transX" type="number" [(ngModel)]="transX">
+      </div>
+      <div class="input-container">
+        <span>Y:</span>
+        &nbsp;
+        <input name="transY" type="number" [(ngModel)]="transY">
+      </div>
+      <input type="submit" value="">
+    </form>
+  </div>
+  <div class="rotation-container feature-container">
+    <span class="feature-title">
+      Rotation
+    </span><br>
+    <form class="feature-form" (submit)="handleTransforms($event)">
+      <div class="input-container">
+        <span>d:</span>
+        &nbsp;
+        <input name="rotate" type="number" [(ngModel)]="rotate">
+      </div>
+      <input type="submit" value="">
+    </form>
+  </div>
+</div>
