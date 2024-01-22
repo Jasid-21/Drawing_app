@@ -25,6 +25,11 @@ class SegmentPoint {
   updateCoord(coord: Duple<number>): void {
     this.coord = coord;
   }
+
+  moveByDelta(deltaX: number, deltaY: number): void {
+    this.coord[0] = this.coord[0] + deltaX;
+    this.coord[1] = this.coord[1] + deltaY;
+  }
 }
 
 export default SegmentPoint;

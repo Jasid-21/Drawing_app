@@ -42,37 +42,37 @@
 
           <defs id="rendering_store">
             <g>
-              <circle *ngFor="let c of filterByShapeType('circle')"
+              <circle *ngFor="let c of filterCircles()"
                 [id]="c.id"
                 [attr.fill]="c.fill"
                 [attr.stroke]="c.stroke"
                 [class.selected-shape]="c.selected"
-                [attr.cx]="getPoint(c.start)[0] || 0"
-                [attr.cy]="getPoint(c.start)[1] || 0"
-                [attr.r]="c.radiusX"
-                [style.transform-origin]="getCenter(c.id)"
+                [attr.cx]="c.getCoord(c.start)[0] || 0"
+                [attr.cy]="c.getCoord(c.start)[1] || 0"
+                [attr.r]="c.radius"
+                [style.transform-origin]="c.getCenter()"
                 [style.translate]="c.translate[0] + 'px ' + c.translate[1] + 'px'">
               </circle>
 
-              <rect *ngFor="let r of filterByShapeType('rect')"
+              <rect *ngFor="let r of filterRects()"
                 [id]="r.id"
                 [attr.fill]="r.fill"
                 [attr.stroke]="r.stroke"
                 [class.selected-shape]="r.selected"
-                [attr.x]="getPoint(r.start)[0] || 0"
-                [attr.y]="getPoint(r.start)[1] || 0"
-                [attr.width]="r.radiusX"
-                [attr.height]="r.radiusY"
-                [style.transform-origin]="getCenter(r.id)">
+                [attr.x]="r.getCoord(r.start)[0] || 0"
+                [attr.y]="r.getCoord(r.start)[1] || 0"
+                [attr.width]="r.width"
+                [attr.height]="r.height"
+                [style.transform-origin]="r.getCenter()">
               </rect>
 
-              <path *ngFor="let s of filterByShapeType('path')"
+              <path *ngFor="let s of filterPaths()"
                 [id]="s.id"
                 [attr.fill]="s.fill"
                 [attr.stroke]="s.stroke"
                 [class.selected-shape]="s.selected"
-                [attr.d]="getPath(s.id)"
-                [style.transform-origin]="getCenter(s.id)">
+                [attr.d]="s.getPath()"
+                [style.transform-origin]="s.getCenter()">
               </path>
             </g>
           </defs>
@@ -83,12 +83,12 @@
 
           <use *ngFor="let s of shapes"
             class="shape draggable"
-            (click)="selectShape(s.id)"
+            (click)="selectShape(s)"
             [attr.href]="'#' + s.id">
           </use>
         </svg>
 
-        <app-point *ngFor="let point of filterByPointType('raw', true)"
+        <app-point *ngFor="let point of points"
           (emitPointId)="handlePointClick($event)"
           (draggingPoint)="handlePointDrag($event)"
           [id]="point.id"

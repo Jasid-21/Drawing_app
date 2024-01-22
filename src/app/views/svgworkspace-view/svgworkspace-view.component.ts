@@ -1,17 +1,18 @@
-import { Component, OnInit, NgModule, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import Segment from 'src/app/helpers/classes/Segment.class';
 import SegmentPoint from 'src/app/helpers/classes/SegmentPoint.class';
-import Shape from 'src/app/helpers/classes/Shape.class';
 import Duple from 'src/app/helpers/types/Duple.type';
 import MouseMode from 'src/app/helpers/types/MouseMode.type';
 import PointType from 'src/app/helpers/types/PointType.type';
 import SegmentType from 'src/app/helpers/types/SegmentType.type';
-import ShapeType from 'src/app/helpers/types/ShapeType.type';
 import { ShapesManagerService } from 'src/app/services/shapes-manager.service';
-import { ShapesTranslatorService } from 'src/app/services/shapes-translator.service';
 import { faArrowPointer, faPenNib } from '@fortawesome/free-solid-svg-icons';
 import { faCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
 import DragPointObj from 'src/app/helpers/types/DragPointObj.type';
+import Circle from 'src/app/helpers/classes/Circle.class';
+import Path from 'src/app/helpers/classes/Path.class';
+import Rect from 'src/app/helpers/classes/Rect.class';
+import Figure from 'src/app/helpers/types/Figure.type';
 
 @Component({
   selector: 'app-svgworkspace-view',
@@ -28,7 +29,7 @@ export class SVGWorkspaceViewComponent implements OnInit {
   faDefault = faArrowPointer;
   activeBtn: MouseMode = this.ShapesManager.mouseMode;
 
-  shapes: Shape[] = [];
+  shapes: (Circle | Rect | Path)[] = [];
   points: SegmentPoint[] = [];
   draggedElement:string = '';
   dragStartPoint: Duple<number> | null = null;
@@ -45,24 +46,45 @@ export class SVGWorkspaceViewComponent implements OnInit {
   startCoord: Duple<number> = [0, 0];
   startPointId: string = '';
   endPointId: string = '';
-  constrolPointId: string = '';
+  controlPointId: string = '';
   rawShapeId: string = '';
   mouseIsDown: boolean = false;
   creatingShape: boolean = false;
 
   constructor(
     private ShapesManager: ShapesManagerService,
-    private ShapesTranslator: ShapesTranslatorService,
   ) {}
 
   ngOnInit(): void {
     this.ShapesManager.$shapes.subscribe((v) => {
       this.shapes = v;
+
+      if (this.rawShapeId) {
+        const shape = this.shapes.find(s =>  s.id == this.rawShapeId);
+        if (shape) this.points = shape.points;
+      } else {
+        this.points = [];
+        const selected = v.filter(s => s.selected);
+        selected.forEach(s => {
+          this.points.push(...s.points);
+        });
+        this.points.forEach(p => {
+          p.show = true;
+        });
+      }
     });
 
-    this.ShapesManager.$points.subscribe((v) => {
-      this.points = v;
+    this.ShapesManager.$currentShapeId.subscribe((v) => {
+      this.rawShapeId = v || '';
+
+      const rawShape = this.shapes.find(s => s.id == v);
+      if (rawShape) {
+        this.points = rawShape.points;
+      }
     });
+
+    const circle = new Circle([100, 100], 50);
+    this.ShapesManager.addShape(circle);
 
     const canvas = this.canvas.nativeElement as HTMLCanvasElement;
     this.canvasBound = canvas.getBoundingClientRect();
@@ -101,25 +123,28 @@ export class SVGWorkspaceViewComponent implements OnInit {
     const shape = this.shapes.find((s) => s.id == this.rawShapeId);
     if (!shape) return;
 
+    if (!(shape instanceof Path)) return;
+
     const segments = shape.segments;
     if (!segments.length) return;
-
     if (segments[0].start != pointId) return;
-    this.creatingShape = false;
-    this.mouseIsDown = false;
-    this.rawShapeId = '';
-    this.endPointId = '';
-    const lastSegment = segments[segments.length - 1];
-    lastSegment.end = pointId;
 
     segments.forEach((s) => {
       const startCoord = this.points.find((p) =>  p.id == s.start);
-
       if (startCoord) {
         startCoord.type = 'union';
         startCoord.show = false;
       }
     });
+
+    const lastSegment = segments[segments.length - 1];
+    lastSegment.end = pointId;
+    shape.removePoint(this.endPointId);
+
+    this.ShapesManager.setCurrentShape('');
+    this.creatingShape = false;
+    this.mouseIsDown = false;
+    this.endPointId = '';
   }
 
   handlePointDrag(dragObj: DragPointObj): void {
@@ -140,7 +165,8 @@ export class SVGWorkspaceViewComponent implements OnInit {
       scaledEnd[1] - scaledStart[1],
     ]
 
-    this.ShapesManager.movePoint(id, deltaX, deltaY);
+    const point = this.points.find(p => p.id == id);
+    point?.moveByDelta(deltaX, deltaY);
   }
 
   handledragOver(ev: DragEvent): void {
@@ -149,6 +175,8 @@ export class SVGWorkspaceViewComponent implements OnInit {
 
   mouseDown(ev: MouseEvent): void {
     this.ShapesManager.deselectAll();
+    this.mouseIsDown = true;
+
     const mouseMode = this.ShapesManager.mouseMode;
     if (mouseMode == 'default') {
       const t = ev.target as HTMLElement;
@@ -176,32 +204,50 @@ export class SVGWorkspaceViewComponent implements OnInit {
     const mousePoint = this.scaledMouse(ev.offsetX, ev.offsetY);
     this.startCoord = [...mousePoint];
 
-    //const pointType: PointType = mouseMode == 'path' ? 'union' : 'raw';
-    const tryPoint = this.points.find((p) => p.id == this.endPointId)
-    const startPoint = tryPoint || new SegmentPoint('raw', mousePoint);
-    startPoint.show = true;
-    if (!tryPoint) {
-      this.ShapesManager.addPoint(startPoint);
-    }
-    const endPoint = new SegmentPoint('raw', mousePoint);
-    this.ShapesManager.addPoint(endPoint);
-
-    const segment = new Segment('line', startPoint.id, endPoint.id);
-    const tryShape = this.shapes.find((s) => s.id == this.rawShapeId);
-    const shape = tryShape || new Shape(mouseMode, [], false, startPoint.id);
-    shape.segments.push(segment);
-    if (!tryShape) {
-      const shapesColor = this.ShapesManager.shapesColor;
-      shape.setFill(shapesColor);
-      this.ShapesManager.addShape(shape);
+    if (mouseMode == 'circle') {
+      const circle = new Circle(mousePoint, 0);
+      this.ShapesManager.setCurrentShape(circle.id);
+      this.ShapesManager.addShape(circle);
+      this.creatingShape = true;
     }
 
-    this.rawShapeId = shape.id;
-    this.startPointId = startPoint.id;
-    this.endPointId = endPoint.id;
+    if (mouseMode == 'rect') {
+      const rect = new Rect(mousePoint, 0, 0);
+      this.ShapesManager.setCurrentShape(rect.id);
+      this.ShapesManager.addShape(rect);
+      this.creatingShape = true;
+    }
 
-    this.creatingShape = true;
-    this.mouseIsDown = true;
+    if (mouseMode == 'path') {
+      const prevPath = this.shapes.find(s => s.id == this.rawShapeId);
+
+      if (prevPath && prevPath instanceof Path) {
+        this.startPointId = this.endPointId;
+        const endPoint = new SegmentPoint('raw', mousePoint);
+        prevPath.addPoint(endPoint);
+        this.endPointId = endPoint.id;
+
+        const segment = new Segment('line', this.startPointId, this.endPointId);
+        prevPath.addSegment(segment);
+      } else {
+        const startPoint = new SegmentPoint('raw', mousePoint);
+        const endPoint = new SegmentPoint('raw', mousePoint);
+        this.startPointId = startPoint.id;
+        this.endPointId = endPoint.id;
+
+        const segment = new Segment('line', this.startPointId, this.endPointId);
+        const path = new Path([segment]);
+        path.addPoint(startPoint);
+        path.addPoint(endPoint);
+        this.ShapesManager.setCurrentShape(path.id);
+
+        const shapesColor = this.ShapesManager.shapesColor;
+        path.setFill(shapesColor);
+        this.ShapesManager.addShape(path);
+
+        this.creatingShape = true;
+      }
+    }
   }
 
   mouseMove(ev: MouseEvent): void {
@@ -221,32 +267,35 @@ export class SVGWorkspaceViewComponent implements OnInit {
       const scaledMouse = this.scaledMouse(mouseX, mouseY);
 
       if (!this.dragStartPoint) return;
-      this.ShapesManager.moveShape(
-        this.draggedElement,
+      const shape = this.shapes.find(s => s.id == this.draggedElement);
+      if (!shape) return;
+
+      shape.moveShape(
         scaledMouse[0] - this.dragStartPoint[0],
         scaledMouse[1] - this.dragStartPoint[1]
       );
 
       this.dragStartPoint = [...scaledMouse];
+      return;
     }
 
     if (!this.creatingShape) return;
 
     const mousePoint = this.scaledMouse(ev.offsetX, ev.offsetY);
-    if (mouseMode == 'path') {
-      const point = this.points.find((p) => p.id == this.endPointId);
-      if (!point) return;
-      point.updateCoord(mousePoint);
+    const shape = this.shapes.find(s => s.id == this.rawShapeId);
+    if (!shape) return;
+
+    if (shape instanceof Path) {
+      //shape.showPoints([]);
+      shape.updatePointCoord(this.endPointId, mousePoint);
 
       if (this.mouseIsDown) {
-        const shape = this.shapes.find((s) => s.id == this.rawShapeId);
-        if (!shape) return;
-
+        const lastSegment = shape.segments[shape.segments.length - 1];
         const prevSegment = shape.segments[shape.segments.length - 2];
         if (!prevSegment) return;
+
         if (prevSegment.type == 'doubleCurve') {
-          console.log("double");
-          const controlPoint = this.points.find((p) => p.id == this.constrolPointId);
+          const controlPoint = this.points.find((p) => p.id == this.controlPointId);
           if (!controlPoint) return;
           const lastStartPoint = this.points.find((p) => p.id == this.startPointId);
           if (!lastStartPoint) return;
@@ -259,42 +308,26 @@ export class SVGWorkspaceViewComponent implements OnInit {
             lastStartPoint.coord[0] - deltaX,
             lastStartPoint.coord[1] - deltaY,
           ];
+
           controlPoint.updateCoord(newControlPoint);
 
           return;
         }
 
         if (prevSegment.type == 'curve') {
-          const newControlPoint = new SegmentPoint('control', point.coord);
-          this.ShapesManager.addPoint(newControlPoint);
-          prevSegment.addControlPoint(newControlPoint.id);
-          prevSegment.type = 'doubleCurve';
-          this.constrolPointId = newControlPoint.id;
-        } else {
-          const point = this.points.find((p) => p.id == this.endPointId);
-          point?.updateCoord(mousePoint);
+          const newControlPoint = shape.segmentToDoubleCurve(prevSegment.id, 'end');
+          this.controlPointId = newControlPoint || '';
         }
+
+        shape.updatePointCoord(this.endPointId, mousePoint);
       }
 
       return;
     }
 
-    const radiusX = mousePoint[0] - this.startCoord[0];
-    const radiusY = mousePoint[1] - this.startCoord[1];
-
-    if (mouseMode == 'rect') {
-      if (mousePoint[0] < this.startCoord[0] || mousePoint[1] < this.startCoord[1]) {
-        this.ShapesManager.updateShapeSize(
-          this.rawShapeId,
-          radiusX,
-          radiusY,
-          mousePoint,
-          this.startCoord,
-          );
-        return;
-      }
+    if (shape instanceof Rect || shape instanceof Circle) {
+      shape.updateSize(mousePoint[0], mousePoint[1]);
     }
-    this.ShapesManager.updateShapeSize(this.rawShapeId, radiusX, radiusY);
   }
 
   mouseUp(ev: MouseEvent): void {
@@ -311,112 +344,50 @@ export class SVGWorkspaceViewComponent implements OnInit {
     if (!diff) {
       if (mouseMode != 'path') {
         this.ShapesManager.removeShape(this.rawShapeId);
-        this.ShapesManager.removePoint(this.endPointId);
-        this.ShapesManager.removePoint(this.startPointId);
+        this.ShapesManager.setCurrentShape('');
         this.creatingShape = false;
+        this.startPointId = '';
+        this.endPointId = ''
+
+        return;
       }
 
       const shape = this.shapes.find(s => s.id == this.rawShapeId);
-      if (!shape) return;
-
-      const startPoint = this.points.find((p) => p.id == shape.segments[0].start);
-      if (!startPoint) return;
-
-      startPoint.type = 'union';
+      if (!shape || !(shape instanceof Path)) return;
+      shape.showPoints([shape.segments[0].start]);
 
       return;
     }
 
     if (diff) {
-      if (mouseMode == 'path') {
-        const shape = this.shapes.find((s) => s.id == this.rawShapeId);
-        if (!shape) return;
+      const shape = this.shapes.find((s) => s.id == this.rawShapeId);
+      if (!shape) return;
 
-        const startPoint = this.points.find((p) => p.id == shape.segments[0].start);
-        if (!startPoint) return;
-        startPoint.type = 'union';
+      if (mouseMode == 'path') {
+        if (!(shape instanceof Path)) return;
+        shape.showPoints([shape.segments[0].start]);
 
         const segment = shape.segments[shape.segments.length - 1];
         segment.type = 'curve';
 
-        const endPoint = this.points.find((p) => p.id == this.endPointId);
-        if (!endPoint) return;
-
-        endPoint.type = 'control';
-        segment.addControlPoint(endPoint.id);
-
-        const newEndPoint = new SegmentPoint('raw', endPoint.coord);
-        this.ShapesManager.addPoint(newEndPoint);
-        segment.end = newEndPoint.id;
-        this.endPointId = newEndPoint.id;
+        const controlPoint = new SegmentPoint('control', mp);
+        shape.addPoint(controlPoint);
+        segment.addControlPoint(controlPoint.id);
       } else {
-        this.ShapesManager.removePoint(this.endPointId);
-        const startPoint = this.points.find((p) => p.id == this.startPointId);
+        //shape.deselectAllPoints();
+        const startPoint = shape.getPoint(this.startPointId);
         if (startPoint) {
           startPoint.type = 'union';
           startPoint.show = false;
         }
 
+        this.ShapesManager.setCurrentShape('');
         this.startCoord = [0, 0];
         this.startPointId = '';
         this.endPointId = '';
-        this.rawShapeId = '';
         this.creatingShape = false;
       }
     }
-  }
-
-  getPoint(id: string): Duple<number | null> {
-    const point = this.points.find((p) => p.id == id);
-    if (!point) return [null, null];
-
-    return point.coord;
-  }
-
-  getCenter(shapeId: string): string | undefined {
-    const shape = this.shapes.find((s) => s.id == shapeId);
-    if (!shape) return;
-
-    var center: Duple<number> | undefined = undefined;
-    if (shape.type == 'path') {
-      var minX: number = Infinity,
-      maxX: number = -Infinity,
-      minY: number = Infinity,
-      maxY: number = -Infinity;
-      shape.segments.forEach((s) => {
-        const startPoint = this.points.find((p) => p.id == s.start);
-        if (!startPoint) return;
-
-        if (startPoint.coord[0] < minX) minX = startPoint.coord[0];
-        if (startPoint.coord[0] > maxX) maxX = startPoint.coord[0];
-        if (startPoint.coord[1] < minY) minY = startPoint.coord[1];
-        if (startPoint.coord[1] > maxY) maxY = startPoint.coord[1];
-      });
-
-      center = [
-        (minX + maxX) / 2,
-        (minY + maxY) / 2
-      ]
-    }
-
-    if (shape.type == 'circle') {
-      const point = this.points.find((p) => p.id == shape.start);
-      if (!point) return;
-
-      center = point.coord;
-    }
-
-    if (shape.type == 'rect') {
-      const start = this.points.find((p) => p.id == shape.start);
-      if (!start) return;
-
-      center = [
-        start.coord[0] + shape.radiusX / 2,
-        start.coord[1] + shape.radiusY / 2
-      ];
-    }
-
-    return center?.map((n) => n + 'px').join(' ');
   }
 
   scaledMouse(mouseX: number, mouseY: number): Duple<number> {
@@ -428,8 +399,31 @@ export class SVGWorkspaceViewComponent implements OnInit {
     return [scaledX, scaledY];
   }
 
-  filterByShapeType(type: ShapeType): Shape[] {
-    return this.shapes.filter((s) => s.type == type);
+  filterCircles(): Circle[] {
+    const circles: Circle[] = [];
+    this.shapes.forEach(s => {
+      if (s instanceof Circle) circles.push(s);
+    });
+
+    return circles;
+  }
+
+  filterRects(): Rect[] {
+    const ss: Rect[] = [];
+    this.shapes.forEach(s => {
+      if (s instanceof Rect) ss.push(s);
+    });
+
+    return ss;
+  }
+
+  filterPaths(): Path[] {
+    const ss: Path[] = [];
+    this.shapes.forEach(s => {
+      if (s instanceof Path) ss.push(s);
+    });
+
+    return ss;
   }
 
   filterByPointType(type: PointType, exclude: boolean = false): SegmentPoint[] {
@@ -453,17 +447,9 @@ export class SVGWorkspaceViewComponent implements OnInit {
     this.activeBtn = mode;
   }
 
-  getPath(shapeId: string): string {
-    const shape = this.shapes.find((s) => s.id == shapeId);
-    if (!shape) return '';
-    return this.ShapesTranslator.shapeToPath(shape)
-      + (!this.creatingShape ? ' Z' : '');
-  }
-
-  selectShape(shapeId: string): void {
-    const mouseMode = this.ShapesManager.mouseMode;
-    if (mouseMode != 'default') return;
-
-    this.ShapesManager.toggleShapeSelection(shapeId);
+  selectShape(shape: Figure): void {
+    console.log(shape.points.map(p => p.id));
+    shape.toggleSelect();
+    this.ShapesManager.updateShapesList(this.shapes);
   }
 }
