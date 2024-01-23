@@ -31,7 +31,7 @@ class Circle extends Shape {
     const point = this.points.find((p) => p.id == this.start);
     if (!point) return;
 
-    center = point.coord;
+    center = [point.coord[0], point.coord[1]];
     return center?.map((n) => n + 'px').join(' ');
   }
 

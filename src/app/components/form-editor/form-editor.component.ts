@@ -44,19 +44,24 @@ export class FormEditorComponent implements OnInit {
   }
 
   handleTransforms(ev: SubmitEvent): void {
-    console.log(ev);
-    if (!this.validateTransforms([this.scaleX, this.scaleY])) return;
+    if (!this.validateTransforms([
+      this.rotate,
+      this.scaleX,
+      this.scaleY,
+      this.transX,
+      this.transY
+    ])) return;
 
     this.selectedShapes.forEach((s) => {
       s.setTransforms(
-        this.rotate,
+        this.rotate || 0,
         [
           this.scaleX || 1,
           this.scaleY || 1
         ],
         [
-          this.transX || 1,
-          this.transY || 1
+          this.transX || 0,
+          this.transY || 0
         ],
       );
     });

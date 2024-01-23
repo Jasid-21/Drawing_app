@@ -52,7 +52,13 @@ class Shape {
 
   getCoord(pointId: string): Duple<number | undefined> {
     const point = this.points.find(p => p.id == pointId);
-    return point ? point.coord : [undefined, undefined];
+    return point ?
+      [point.coord[0], point.coord[1]]
+      : [undefined, undefined];
+  }
+
+  getScale(): string {
+    return this.scale.map(s => s + 'px').join(' ');
   }
 
   setPointsMode(ids: string[], from: PointType | '*' = '*', to: PointType, last = false): void {
@@ -98,6 +104,12 @@ class Shape {
     scale: Duple<number>  = [1, 1],
     translate: Duple<number> = [0, 0]
   ): void {
+    this.points.forEach(p => {
+      console.log(p.coord);
+      const base = [p.coord[0] - this.translate[0], p.coord[1] - this.translate[1]];
+      p.coord = [base[0] + translate[0], base[1] + translate[1]];
+    });
+
     this.scale = scale;
     this.rotate = rotate;
     this.translate = translate;

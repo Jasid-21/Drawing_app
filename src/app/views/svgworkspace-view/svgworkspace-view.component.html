@@ -51,7 +51,8 @@
                 [attr.cy]="c.getCoord(c.start)[1] || 0"
                 [attr.r]="c.radius"
                 [style.transform-origin]="c.getCenter()"
-                [style.translate]="c.translate[0] + 'px ' + c.translate[1] + 'px'">
+                [style.scale]="c.scale.join(' ')"
+                [style.rotate]="c.rotate + 'deg'">
               </circle>
 
               <rect *ngFor="let r of filterRects()"
@@ -86,6 +87,14 @@
             (click)="selectShape(s)"
             [attr.href]="'#' + s.id">
           </use>
+
+          <rect [attr.x]="selectionStart[0]"
+          [attr.y]="selectionStart[1]"
+          [attr.width]="selectionWidth"
+          [attr.height]="selectionHeight"
+          stroke="rgb(32, 196, 225)"
+          fill="none"
+          stroke-dasharray="5, 5"></rect>
         </svg>
 
         <app-point *ngFor="let point of points"

@@ -22,6 +22,9 @@ import Figure from 'src/app/helpers/types/Figure.type';
 export class SVGWorkspaceViewComponent implements OnInit {
   @ViewChild('canvas', { static: true }) canvas!: ElementRef;
   canvasBound: DOMRect | null = null;
+  selectionStart: Duple<number> = [0, 0];
+  selectionWidth: number = 0;
+  selectionHeight: number = 0;
 
   faCircle = faCircle;
   faRect = faSquare;
